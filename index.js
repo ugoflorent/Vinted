@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const mongoose = require("mongoose");
 const { title, nextTick } = require("process");
+const stripe = require("stripe")(process.env.STRIPE_API_SECRET);
 
 const app = express();
 app.use(express.json());
@@ -25,6 +26,24 @@ app.use(userRoutes);
 
 const offerRoutes = require("./routes/offer");
 app.use(offerRoutes);
+
+app.post("/pay", async (req, res) => {
+  const stripeToken = req.body.stripeToken;
+
+  const response = await stripe.charges.create({
+    amount: 2000,
+    currency: "eur",
+    description: "La description de l'objet acheté",
+
+    source: stripeToken,
+  });
+  console.log(response.status);
+
+  // TODO
+  // Sauvegarder la transaction dans une BDD MongoDB
+
+  res.json(response);
+});
 
 app.get("/", (req, res) => {
   res.json("Bienvenue dans mon serveur");
